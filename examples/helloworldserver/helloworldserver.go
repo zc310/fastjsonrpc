@@ -24,6 +24,9 @@ func main() {
 	ss.RegisterHandler("echo", func(c *fastjsonrpc.Context) {
 		c.Result = c.Params
 	})
+	ss.RegisterHandler("sum", func(c *fastjsonrpc.Context) {
+		c.Result = c.Params.GetInt("a") + c.Params.GetInt("b")
+	})
 	r.POST("/rpc", fasthttp.CompressHandler(ss.Handler))
 	r.POST("/handler", fastjsonrpc.Rpc(handler))
 

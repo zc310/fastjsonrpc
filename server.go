@@ -39,7 +39,7 @@ func (p *ServerMap) Call(ctx *fasthttp.RequestCtx) {
 			_, _ = c.w.Write(ErrInvalidRequest)
 			return
 		}
-		p.call(a, c)
+		p.batch(a, c)
 		return
 	}
 	if c.request.Type() != fastjson.TypeObject {
@@ -66,7 +66,7 @@ func (p *ServerMap) Call(ctx *fasthttp.RequestCtx) {
 		c.writeError(c.w)
 	}
 }
-func (p *ServerMap) call(a []*fastjson.Value, ctx *Context) {
+func (p *ServerMap) batch(a []*fastjson.Value, ctx *Context) {
 	aa := make([]*bytebufferpool.ByteBuffer, len(a))
 
 	lock := new(sync.Mutex)

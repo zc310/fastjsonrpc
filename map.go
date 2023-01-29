@@ -2,8 +2,8 @@ package fastjsonrpc
 
 import (
 	"errors"
-	"github.com/goccy/go-reflect"
 	"go/token"
+	"reflect"
 	"strings"
 	"sync"
 )

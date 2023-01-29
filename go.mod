@@ -5,7 +5,6 @@ go 1.19
 require (
 	github.com/fasthttp/router v1.4.15
 	github.com/goccy/go-json v0.10.0
-	github.com/goccy/go-reflect v1.2.0
 	github.com/stretchr/testify v1.8.1
 	github.com/tidwall/pretty v1.2.1
 	github.com/valyala/bytebufferpool v1.0.0

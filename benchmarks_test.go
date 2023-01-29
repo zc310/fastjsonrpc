@@ -7,6 +7,8 @@ import (
 )
 
 func BenchmarkEchoHandler(b *testing.B) {
+	b.ReportAllocs()
+
 	s := new(ServerMap)
 	s.RegisterHandler("echo", func(c *Context) { c.Result = c.Params })
 
@@ -21,6 +23,8 @@ func BenchmarkEchoHandler(b *testing.B) {
 	}
 }
 func BenchmarkSumHandler(b *testing.B) {
+	b.ReportAllocs()
+
 	s := new(ServerMap)
 	s.RegisterHandler("sum", func(c *Context) {
 		c.Result = c.Params.GetInt("a") + c.Params.GetInt("b")
@@ -38,6 +42,8 @@ func BenchmarkSumHandler(b *testing.B) {
 	}
 }
 func BenchmarkBatchSumHandler(b *testing.B) {
+	b.ReportAllocs()
+
 	s := new(ServerMap)
 	s.RegisterHandler("sum", func(c *Context) {
 		c.Result = c.Params.GetInt("a") + c.Params.GetInt("b")
@@ -45,7 +51,7 @@ func BenchmarkBatchSumHandler(b *testing.B) {
 
 	ctx := new(fasthttp.RequestCtx)
 	ctx.Request.Header.SetMethod(fasthttp.MethodPost)
-	ctx.Request.SetBodyString(`
+	ctx.Request.SetBodyString(`k
 [
   { "jsonrpc": "2.0", "method": "sum", "params": { "a": 3, "b": 3 }, "id": 3 },
   { "jsonrpc": "2.0", "method": "sum", "params": { "a": 6, "b": 6 }, "id": 6 },

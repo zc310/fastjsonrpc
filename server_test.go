@@ -9,6 +9,39 @@ import (
 	"testing"
 )
 
+func TestBatch(t *testing.T) {
+	s := new(ServerMap)
+	s.RegisterHandler("sum", func(c *Context) {
+		c.Result = c.Params.GetInt("a") + c.Params.GetInt("b")
+	})
+
+	f := func(request, response string) {
+		ctx := new(fasthttp.RequestCtx)
+		ctx.Request.Header.SetMethod(fasthttp.MethodPost)
+		ctx.Request.SetBodyString(request)
+
+		s.Handler(ctx)
+
+		assert.Equal(t, ctx.Response.StatusCode(), fasthttp.StatusOK)
+		assert.Equal(t, string(pretty.Ugly([]byte(response))), string(pretty.Ugly(ctx.Response.Body())))
+	}
+	t.Run("rpc call Batch", func(t *testing.T) {
+		f(
+			`
+			[
+			  { "jsonrpc": "2.0", "method": "sum", "params": { "a": 3, "b": 3 }, "id": 3 },
+			  { "jsonrpc": "2.0", "method": "sum", "params": { "a": 6, "b": 6 }, "id": 6 },
+			  { "jsonrpc": "2.0", "method": "sum", "params": { "a": 9, "b": 9 }, "id": 9 }
+			]`,
+			`
+			[
+			  { "jsonrpc": "2.0", "result": 6, "id": 3 },
+			  { "jsonrpc": "2.0", "result": 12, "id": 6 },
+			  { "jsonrpc": "2.0", "result": 18, "id": 9 }
+			]`,
+		)
+	})
+}
 func TestSpec(t *testing.T) {
 	t.Parallel()
 

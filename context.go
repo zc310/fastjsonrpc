@@ -90,7 +90,8 @@ func (p *Context) writeError(w io.Writer) {
 }
 
 var (
-	_pool sync.Pool
+	_pool       sync.Pool
+	_poolBuffer sync.Pool
 )
 
 func GetContext() *Context {
@@ -110,6 +111,45 @@ func PutContext(p *Context) {
 	p.id = p.id[:0]
 	p.Error = nil
 	p.Result = nil
+	p.Ctx = nil
 
 	_pool.Put(p)
+}
+
+type BatchBuffer struct {
+	wg sync.WaitGroup
+	B  []*bytebufferpool.ByteBuffer
+	Ct []*Context
+	w  *bytebufferpool.ByteBuffer
+}
+
+func GetBatchBuffer(n int) *BatchBuffer {
+	var p *BatchBuffer
+	v := _poolBuffer.Get()
+	if v == nil {
+		p = &BatchBuffer{B: make([]*bytebufferpool.ByteBuffer, 0, 32), Ct: make([]*Context, 0, 32)}
+	} else {
+		p = v.(*BatchBuffer)
+	}
+
+	p.w = bytebufferpool.Get()
+	for i := 0; i < n; i++ {
+		p.B = append(p.B, bytebufferpool.Get())
+		p.Ct = append(p.Ct, GetContext())
+	}
+
+	return p
+}
+
+func PutBatchBuffer(p *BatchBuffer) {
+	for i, b := range p.B {
+		bytebufferpool.Put(b)
+		PutContext(p.Ct[i])
+	}
+	p.B = p.B[:0]
+	p.Ct = p.Ct[:0]
+
+	bytebufferpool.Put(p.w)
+
+	_poolBuffer.Put(p)
 }

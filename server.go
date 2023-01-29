@@ -2,10 +2,8 @@ package fastjsonrpc
 
 import (
 	"fmt"
-	"github.com/valyala/bytebufferpool"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fastjson"
-	"sync"
 )
 
 func (p *ServerMap) Handler(ctx *fasthttp.RequestCtx) {
@@ -67,82 +65,59 @@ func (p *ServerMap) Call(ctx *fasthttp.RequestCtx) {
 	}
 }
 func (p *ServerMap) batch(a []*fastjson.Value, ctx *Context) {
-	aa := make([]*bytebufferpool.ByteBuffer, len(a))
-
-	lock := new(sync.Mutex)
-	wg := new(sync.WaitGroup)
+	bf := GetBatchBuffer(len(a))
 
 	for i, sc := range a {
-		ct := GetContext()
+		ct := bf.Ct[i]
 		ct.Ctx = ctx.Ctx
 
 		ct.setRequest(sc)
-
 		if ct.request.Type() != fastjson.TypeObject || len(ct.Method) == 0 {
-			b := bytebufferpool.Get()
-			_, _ = b.Write(ErrInvalidRequest)
-
-			PutContext(ct)
-
-			lock.Lock()
-			aa[i] = b
-			lock.Unlock()
+			_, _ = bf.B[i].Write(ErrInvalidRequest)
 			continue
 		}
 		f := p.getFun(string(ct.Method))
 		if f == nil {
 			ct.Error = ErrMethodNotFound
-			b := bytebufferpool.Get()
-			ct.writeError(b)
-
-			PutContext(ct)
-
-			lock.Lock()
-			aa[i] = b
-			lock.Unlock()
+			ct.writeError(bf.B[i])
 			continue
 		}
 
-		wg.Add(1)
+		bf.wg.Add(1)
 
-		go func(cc *Context, index int) {
+		go func(index int) {
+			cc := bf.Ct[index]
+
 			f(cc)
-			b := bytebufferpool.Get()
+
 			if cc.Error == nil {
-				cc.writeResult(b)
+				cc.writeResult(bf.B[index])
 			} else {
-				cc.writeError(b)
+				cc.writeError(bf.B[index])
 			}
-			PutContext(cc)
 
-			lock.Lock()
-			aa[index] = b
-			lock.Unlock()
-
-			wg.Done()
-		}(ct, i)
+			bf.wg.Done()
+		}(i)
 	}
-	wg.Wait()
+	bf.wg.Wait()
 
-	buf := bytebufferpool.Get()
+	_, _ = bf.w.WriteString("[")
 	var n int
-	for _, b := range aa {
+	for _, b := range bf.B {
 		if b.Len() == 0 {
 			continue
 		}
 		if n > 0 {
-			_, _ = fmt.Fprintf(buf, ",")
+			_, _ = bf.w.WriteString(",")
 		}
-		_, _ = b.WriteTo(buf)
-		bytebufferpool.Put(b)
+		_, _ = b.WriteTo(bf.w)
 		n++
 	}
 
 	if n > 0 {
-		_, _ = fmt.Fprintf(ctx.Ctx, "[")
-		_, _ = fmt.Fprintf(buf, "]")
-		_, _ = buf.WriteTo(ctx.Ctx)
+		_, _ = fmt.Fprintf(bf.w, "]")
+		_, _ = bf.w.WriteTo(ctx.Ctx)
 	}
 
-	bytebufferpool.Put(buf)
+	PutBatchBuffer(bf)
 }

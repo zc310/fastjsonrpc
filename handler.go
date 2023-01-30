@@ -7,10 +7,10 @@ import (
 
 func Rpc(h Handler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
-		c := GetContext()
+		c := getContext()
 		defer func() {
 			_, _ = c.w.WriteTo(ctx)
-			PutContext(c)
+			putContext(c)
 		}()
 
 		c.Ctx = ctx

@@ -13,13 +13,13 @@ func (p *ServerMap) Handler(ctx *fasthttp.RequestCtx) {
 			_, _ = ctx.Write(ErrInternal)
 		}
 	}()
-	p.Call(ctx)
+	p.call(ctx)
 }
-func (p *ServerMap) Call(ctx *fasthttp.RequestCtx) {
-	c := GetContext()
+func (p *ServerMap) call(ctx *fasthttp.RequestCtx) {
+	c := getContext()
 	defer func() {
 		_, _ = c.w.WriteTo(ctx)
-		PutContext(c)
+		putContext(c)
 	}()
 
 	c.Ctx = ctx
@@ -65,7 +65,7 @@ func (p *ServerMap) Call(ctx *fasthttp.RequestCtx) {
 	}
 }
 func (p *ServerMap) batch(a []*fastjson.Value, ctx *Context) {
-	bf := GetBatchBuffer(len(a))
+	bf := getBatchBuffer(len(a))
 
 	for i, sc := range a {
 		ct := bf.Ct[i]
@@ -119,5 +119,5 @@ func (p *ServerMap) batch(a []*fastjson.Value, ctx *Context) {
 		_, _ = bf.w.WriteTo(ctx.Ctx)
 	}
 
-	PutBatchBuffer(bf)
+	putBatchBuffer(bf)
 }

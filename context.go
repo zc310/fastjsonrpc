@@ -94,7 +94,7 @@ var (
 	_poolBuffer sync.Pool
 )
 
-func GetContext() *Context {
+func getContext() *Context {
 	v := _pool.Get()
 	if v == nil {
 		return &Context{Arena: new(fastjson.Arena), pr: new(fastjson.Parser), w: bytebufferpool.Get()}
@@ -104,7 +104,7 @@ func GetContext() *Context {
 	return t
 }
 
-func PutContext(p *Context) {
+func putContext(p *Context) {
 	p.Arena.Reset()
 	bytebufferpool.Put(p.w)
 	p.w = nil
@@ -116,35 +116,35 @@ func PutContext(p *Context) {
 	_pool.Put(p)
 }
 
-type BatchBuffer struct {
+type batchBuffer struct {
 	wg sync.WaitGroup
 	B  []*bytebufferpool.ByteBuffer
 	Ct []*Context
 	w  *bytebufferpool.ByteBuffer
 }
 
-func GetBatchBuffer(n int) *BatchBuffer {
-	var p *BatchBuffer
+func getBatchBuffer(n int) *batchBuffer {
+	var p *batchBuffer
 	v := _poolBuffer.Get()
 	if v == nil {
-		p = &BatchBuffer{B: make([]*bytebufferpool.ByteBuffer, 0, 32), Ct: make([]*Context, 0, 32)}
+		p = &batchBuffer{B: make([]*bytebufferpool.ByteBuffer, 0, 32), Ct: make([]*Context, 0, 32)}
 	} else {
-		p = v.(*BatchBuffer)
+		p = v.(*batchBuffer)
 	}
 
 	p.w = bytebufferpool.Get()
 	for i := 0; i < n; i++ {
 		p.B = append(p.B, bytebufferpool.Get())
-		p.Ct = append(p.Ct, GetContext())
+		p.Ct = append(p.Ct, getContext())
 	}
 
 	return p
 }
 
-func PutBatchBuffer(p *BatchBuffer) {
+func putBatchBuffer(p *batchBuffer) {
 	for i, b := range p.B {
 		bytebufferpool.Put(b)
-		PutContext(p.Ct[i])
+		putContext(p.Ct[i])
 	}
 	p.B = p.B[:0]
 	p.Ct = p.Ct[:0]

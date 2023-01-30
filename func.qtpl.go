@@ -122,3 +122,48 @@ func newError(id []byte, code int, message string, data []byte) string {
 	return qs422016
 //line func.qtpl:24
 }
+
+//line func.qtpl:28
+func streamrpcError(qw422016 *qt422016.Writer, id, error []byte) {
+//line func.qtpl:28
+	qw422016.N().S(`{"jsonrpc":"2.0","error":`)
+//line func.qtpl:31
+	qw422016.N().Z(error)
+//line func.qtpl:32
+	if len(id) > 0 {
+//line func.qtpl:32
+		qw422016.N().S(`,"id":`)
+//line func.qtpl:32
+		qw422016.N().Z(id)
+//line func.qtpl:32
+	}
+//line func.qtpl:32
+	qw422016.N().S(`}`)
+//line func.qtpl:34
+}
+
+//line func.qtpl:34
+func writerpcError(qq422016 qtio422016.Writer, id, error []byte) {
+//line func.qtpl:34
+	qw422016 := qt422016.AcquireWriter(qq422016)
+//line func.qtpl:34
+	streamrpcError(qw422016, id, error)
+//line func.qtpl:34
+	qt422016.ReleaseWriter(qw422016)
+//line func.qtpl:34
+}
+
+//line func.qtpl:34
+func rpcError(id, error []byte) string {
+//line func.qtpl:34
+	qb422016 := qt422016.AcquireByteBuffer()
+//line func.qtpl:34
+	writerpcError(qb422016, id, error)
+//line func.qtpl:34
+	qs422016 := string(qb422016.B)
+//line func.qtpl:34
+	qt422016.ReleaseByteBuffer(qb422016)
+//line func.qtpl:34
+	return qs422016
+//line func.qtpl:34
+}

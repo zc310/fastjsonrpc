@@ -1,5 +1,8 @@
 # fast jsonrpc  [![GoDoc](https://godoc.org/github.com/zc310/fastjsonrpc?status.svg)](http://godoc.org/github.com/zc310/fastjsonrpc) [![Go Report](https://goreportcard.com/badge/github.com/zc310/fastjsonrpc)](https://goreportcard.com/report/github.com/zc310/fastjsonrpc)
 
+Fast [JSON-RPC 2.0](https://www.jsonrpc.org/specification) Server based
+on [fasthttp](https://github.com/valyala/fasthttp)
+
 ## Benchmarks
 
 ```text
@@ -13,8 +16,8 @@ BenchmarkSumHandler      	16349688	       724.4 ns/op	       0 B/op	       0 all
 BenchmarkBatchSumHandler 	 5367964	      2219 ns/op	     712 B/op	      11 allocs/op
 PASS
 ok  	github.com/zc310/fastjsonrpc	39.345s
-
 ```
+
 ## Install
 
 ```
@@ -43,6 +46,10 @@ func main() {
 
 	ss.RegisterHandler("sum", func(c *fastjsonrpc.Context) {
 		c.Result = c.Params.GetInt("a") + c.Params.GetInt("b")
+	})
+
+	ss.RegisterHandler("error", func(c *fastjsonrpc.Context) {
+		c.Error = fastjsonrpc.NewError(-32000, "Server error")
 	})
 
 	r.POST("/rpc", fasthttp.CompressHandler(ss.Handler))

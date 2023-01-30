@@ -66,25 +66,34 @@ func (p *Context) writeError(w io.Writer) {
 	case *Error:
 		if err.Data == nil {
 			writenewError(w, p.id, err.Code, err.Message, nil)
-			return
+		} else {
+			switch v := err.Data.(type) {
+			case *fastjson.Value:
+				b := bytebufferpool.Get()
+				writenewError(w, p.id, err.Code, err.Message, v.MarshalTo(b.B))
+				bytebufferpool.Put(b)
+			case []byte:
+				writenewError(w, p.id, err.Code, err.Message, v)
+			default:
+				b := bytebufferpool.Get()
+				_ = json.NewEncoder(b).Encode(err.Data)
+				writenewError(w, p.id, err.Code, err.Message, b.B)
+				bytebufferpool.Put(b)
+			}
 		}
-
-		switch v := err.Data.(type) {
-		case *fastjson.Value:
-			b := bytebufferpool.Get()
-			writenewError(w, p.id, err.Code, err.Message, v.MarshalTo(b.B))
-			bytebufferpool.Put(b)
-		case []byte:
-			writenewError(w, p.id, err.Code, err.Message, v)
-		default:
-			b := bytebufferpool.Get()
-			_ = json.NewEncoder(b).Encode(err.Data)
-			writenewError(w, p.id, err.Code, err.Message, b.B)
-			bytebufferpool.Put(b)
-		}
-
 	case error:
-		writenewError(w, p.id, 0, err.Error(), nil)
+		writenewError(w, p.id, -32000, err.Error(), nil)
+	case *fastjson.Value:
+		b := bytebufferpool.Get()
+		writerpcError(w, p.id, err.MarshalTo(b.B))
+		bytebufferpool.Put(b)
+	case []byte:
+		writerpcError(w, p.id, err)
+	default:
+		b := bytebufferpool.Get()
+		_ = json.NewEncoder(b).Encode(p.Error)
+		writerpcError(w, p.id, b.B)
+		bytebufferpool.Put(b)
 	}
 
 }

@@ -18,17 +18,17 @@ func Rpc(h Handler) fasthttp.RequestHandler {
 
 		var err error
 		if c.request, err = c.pr.ParseBytes(ctx.Request.Body()); err != nil {
-			_, _ = c.w.Write(ErrParse)
+			_, _ = c.w.Write(errParse)
 			return
 		}
 
 		if c.request.Type() != fastjson.TypeObject {
-			_, _ = c.w.Write(ErrInvalidRequest)
+			_, _ = c.w.Write(errInvalidRequest)
 			return
 		}
 		c.setRequest(c.request)
 		if len(c.Method) == 0 {
-			_, _ = c.w.Write(ErrInvalidRequest)
+			_, _ = c.w.Write(errInvalidRequest)
 			return
 		}
 

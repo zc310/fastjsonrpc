@@ -10,23 +10,21 @@ func (p *ServerMap) Handler(ctx *fasthttp.RequestCtx) {
 	ctx.Response.Header.Set("Content-Type", "application/json; charset=UTF-8")
 	defer func() {
 		if recover() != nil {
-			_, _ = ctx.Write(ErrInternal)
+			_, _ = ctx.Write(errInternal)
 		}
 	}()
-	p.call(ctx)
-}
-func (p *ServerMap) call(ctx *fasthttp.RequestCtx) {
 	c := getContext()
-	defer func() {
-		_, _ = c.w.WriteTo(ctx)
-		putContext(c)
-	}()
-
 	c.Ctx = ctx
 
+	p.call(ctx, c)
+
+	_, _ = c.w.WriteTo(ctx)
+	putContext(c)
+}
+func (p *ServerMap) call(ctx *fasthttp.RequestCtx, c *Context) {
 	var err error
 	if c.request, err = c.pr.ParseBytes(ctx.PostBody()); err != nil {
-		_, _ = c.w.Write(ErrParse)
+		_, _ = c.w.Write(errParse)
 		return
 	}
 
@@ -34,25 +32,27 @@ func (p *ServerMap) call(ctx *fasthttp.RequestCtx) {
 		var a []*fastjson.Value
 		a, _ = c.request.Array()
 		if len(a) > 32 || len(a) == 0 {
-			_, _ = c.w.Write(ErrInvalidRequest)
+			_, _ = c.w.Write(errInvalidRequest)
 			return
 		}
 		p.batch(a, c)
 		return
 	}
+
 	if c.request.Type() != fastjson.TypeObject {
-		_, _ = c.w.Write(ErrInvalidRequest)
+		_, _ = c.w.Write(errInvalidRequest)
 		return
 	}
+
 	c.setRequest(c.request)
 	if len(c.Method) == 0 {
-		_, _ = c.w.Write(ErrInvalidRequest)
+		_, _ = c.w.Write(errInvalidRequest)
 		return
 	}
 
 	f := p.getFun(string(c.Method))
 	if f == nil {
-		c.Error = ErrMethodNotFound
+		c.Error = errMethodNotFound
 		c.writeError(c.w)
 		return
 	}
@@ -73,12 +73,12 @@ func (p *ServerMap) batch(a []*fastjson.Value, ctx *Context) {
 
 		ct.setRequest(sc)
 		if ct.request.Type() != fastjson.TypeObject || len(ct.Method) == 0 {
-			_, _ = bf.B[i].Write(ErrInvalidRequest)
+			_, _ = bf.B[i].Write(errInvalidRequest)
 			continue
 		}
 		f := p.getFun(string(ct.Method))
 		if f == nil {
-			ct.Error = ErrMethodNotFound
+			ct.Error = errMethodNotFound
 			ct.writeError(bf.B[i])
 			continue
 		}

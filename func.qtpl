@@ -23,3 +23,13 @@
 }
 {% endfunc %}
 {% endstripspace %}
+
+{% stripspace %}
+{% func rpcError(id, error []byte) %}
+{
+    "jsonrpc":"2.0",
+    "error":{%z= error %}
+    {%- if len(id) > 0 -%},"id":{%z= id %}{%- endif -%}
+}
+{% endfunc %}
+{% endstripspace %}

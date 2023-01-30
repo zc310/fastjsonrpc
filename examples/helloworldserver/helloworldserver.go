@@ -50,8 +50,10 @@ func (t *Arith) Div(c *fastjsonrpc.Context) {
 	}
 	c.Result = c.Arena.NewNumberInt(c.Params.GetInt("a") / c.Params.GetInt("b"))
 }
-func (t *Arith) Panic(*fastjsonrpc.Context)   { panic("ERROR") }
-func (t *Arith) Error(c *fastjsonrpc.Context) { c.Error = fastjsonrpc.NewError(0, "123") }
+func (t *Arith) Panic(*fastjsonrpc.Context) { panic("ERROR") }
+func (t *Arith) Error(c *fastjsonrpc.Context) {
+	c.Error = fastjsonrpc.NewError(-32000, "Server error")
+}
 func handler(c *fastjsonrpc.Context) {
 	c.Result = c.Arena.NewNumberInt(c.Params.GetInt("a") + c.Params.GetInt("b"))
 }

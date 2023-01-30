@@ -1,6 +1,7 @@
 package fastjsonrpc_test
 
 import (
+	"errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/tidwall/pretty"
 	"github.com/valyala/fasthttp"
@@ -9,6 +10,62 @@ import (
 	"testing"
 )
 
+func TestError(t *testing.T) {
+	t.Parallel()
+
+	s := new(ServerMap)
+	s.RegisterHandler("error1", func(c *Context) {
+		c.Error = NewError(-32000, "Server error")
+	})
+	s.RegisterHandler("error2", func(c *Context) {
+		c.Error = []byte(`{"code":-32000,"message":"Server error"}`)
+	})
+	s.RegisterHandler("error3", func(c *Context) {
+		c.Error = errors.New("server error")
+	})
+	s.RegisterHandler("error4", func(c *Context) {
+		o := c.Arena.NewObject()
+		o.Set("code", c.Arena.NewNumberInt(-32000))
+		o.Set("message", c.Arena.NewString("server error"))
+		c.Error = o
+	})
+	f := func(request, response string) {
+		ctx := new(fasthttp.RequestCtx)
+		ctx.Request.Header.SetMethod(fasthttp.MethodPost)
+		ctx.Request.SetBodyString(request)
+
+		s.Handler(ctx)
+
+		assert.Equal(t, ctx.Response.StatusCode(), fasthttp.StatusOK)
+		assert.Equal(t, string(pretty.Ugly([]byte(response))), string(pretty.Ugly(ctx.Response.Body())))
+	}
+	t.Run("rpc error1", func(t *testing.T) {
+		f(
+			`{"jsonrpc": "2.0", "method": "error1", "params": {}, "id": 1}`,
+			`{"jsonrpc":"2.0","error":{"code":-32000,"message":"Server error"},"id":1}`,
+		)
+
+	})
+	t.Run("rpc error2", func(t *testing.T) {
+		f(
+			`{"jsonrpc": "2.0", "method": "error2", "params": {}, "id": 2}`,
+			`{"jsonrpc":"2.0","error":{"code":-32000,"message":"Server error"},"id":2}`,
+		)
+	})
+
+	t.Run("rpc error3", func(t *testing.T) {
+		f(
+			`{"jsonrpc": "2.0", "method": "error3", "params": {}, "id": 3}`,
+			`{"jsonrpc":"2.0","error":{"code":-32000,"message":"server error"},"id":3}`,
+		)
+	})
+	t.Run("rpc error4", func(t *testing.T) {
+		f(
+			`{"jsonrpc": "2.0", "method": "error4", "params": {}, "id": 4}`,
+			`{"jsonrpc":"2.0","error":{"code":-32000,"message":"server error"},"id":4}`,
+		)
+	})
+}
 func TestBatch(t *testing.T) {
 	s := new(ServerMap)
 	s.RegisterHandler("sum", func(c *Context) {

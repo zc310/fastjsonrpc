@@ -1,5 +1,7 @@
 package fastjsonrpc
 
+import "strconv"
+
 var (
 	errParse          = []byte(`{"jsonrpc":"2.0","error":{"code":-32700,"message":"Parse error"},"id":null}`)
 	errInvalidRequest = []byte(`{"jsonrpc":"2.0","error":{"code":-32600,"message":"Invalid Request"},"id":null}`)
@@ -13,6 +15,6 @@ type Error struct {
 	Data    interface{} `json:"data,omitempty"`
 }
 
-func (p *Error) Error() string { return p.Message }
+func (p *Error) Error() string { return strconv.Itoa(p.Code) + ": " + p.Message }
 
 func NewError(code int, message string) *Error { return &Error{Code: code, Message: message} }

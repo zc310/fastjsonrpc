@@ -28,6 +28,13 @@ type Context struct {
 	Result any
 }
 
+func (p *Context) ParamsUnmarshal(v any) error {
+	b := bytebufferpool.Get()
+	defer bytebufferpool.Put(b)
+
+	b.B = p.Params.MarshalTo(b.B)
+	return json.Unmarshal(b.B, v)
+}
 func (p *Context) setRequest(a *fastjson.Value) {
 	p.Method = a.GetStringBytes("method")
 

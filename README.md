@@ -53,7 +53,9 @@ func main() {
 	ss.RegisterHandler("sum", func(c *fastjsonrpc.Context) {
 		c.Result = c.Params.GetInt("a") + c.Params.GetInt("b")
 	})
-
+	ss.RegisterHandler("error", func(c *fastjsonrpc.Context) {
+		c.Error = nil
+	})
 	r.POST("/rpc", fasthttp.CompressHandler(ss.Handler))
 
 	r.GET("/mem", fastjsonrpc.Get(func(ctx *fastjsonrpc.Context) {
@@ -66,9 +68,16 @@ func main() {
 }
 
 type Arith int
+type Args struct {
+	A int `json:"a,omitempty"`
+	B int `json:"b,omitempty"`
+}
 
 func (t *Arith) Add(c *fastjsonrpc.Context) {
-	c.Result = c.Arena.NewNumberInt(c.Params.GetInt("a") + c.Params.GetInt("b"))
+	var a Args
+	if c.Error = c.ParamsUnmarshal(&a); c.Error == nil {
+		c.Result = a.A + a.B
+	}
 }
 
 func (t *Arith) Mul(c *fastjsonrpc.Context) {
@@ -86,7 +95,6 @@ func (t *Arith) Panic(*fastjsonrpc.Context) { panic("ERROR") }
 func (t *Arith) Error(c *fastjsonrpc.Context) {
 	c.Error = fastjsonrpc.NewError(-32000, "Server error")
 }
-
 ```
 
 ### HTTP Request

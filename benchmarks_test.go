@@ -84,3 +84,30 @@ func BenchmarkBatchSumHandler(b *testing.B) {
 		s.Handler(ctx)
 	}
 }
+
+func BenchmarkParamsUnmarshalHandler(b *testing.B) {
+	type Args struct {
+		A int `json:"a,omitempty"`
+		B int `json:"b,omitempty"`
+	}
+	b.ReportAllocs()
+
+	s := new(ServerMap)
+	s.RegisterHandler("sum", func(c *Context) {
+		var a Args
+		if c.Error = c.ParamsUnmarshal(&a); c.Error == nil {
+			c.Result = a.A + a.B
+		}
+	})
+
+	ctx := new(fasthttp.RequestCtx)
+	ctx.Request.Header.SetMethod(fasthttp.MethodPost)
+	ctx.Request.SetBodyString(`{"jsonrpc":"2.0","method":"sum","params":{"a":3,"b":6},"id":9}`)
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		ctx.Response.ResetBody()
+		s.Handler(ctx)
+	}
+}

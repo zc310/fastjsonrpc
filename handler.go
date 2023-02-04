@@ -41,3 +41,27 @@ func Rpc(h Handler) fasthttp.RequestHandler {
 		}
 	}
 }
+
+var null = []byte("null")
+
+func Get(h Handler) fasthttp.RequestHandler {
+	return func(ctx *fasthttp.RequestCtx) {
+		c := getContext()
+		defer func() {
+			_, _ = c.w.WriteTo(ctx)
+			putContext(c)
+		}()
+
+		c.Ctx = ctx
+		ctx.Response.Header.Set("Content-Type", "application/json; charset=UTF-8")
+		c.id = null
+
+		h(c)
+
+		if c.Error == nil {
+			c.writeResult(c.w)
+		} else {
+			c.writeError(c.w)
+		}
+	}
+}

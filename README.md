@@ -34,6 +34,7 @@ import (
 	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
 	"github.com/zc310/fastjsonrpc"
+	"runtime"
 )
 
 func main() {
@@ -52,7 +53,14 @@ func main() {
 	ss.RegisterHandler("sum", func(c *fastjsonrpc.Context) {
 		c.Result = c.Params.GetInt("a") + c.Params.GetInt("b")
 	})
+
 	r.POST("/rpc", fasthttp.CompressHandler(ss.Handler))
+
+	r.GET("/mem", fastjsonrpc.Get(func(ctx *fastjsonrpc.Context) {
+		var ms runtime.MemStats
+		runtime.ReadMemStats(&ms)
+		ctx.Result = ms
+	}))
 
 	_ = fasthttp.ListenAndServe(":8080", r.Handler)
 }
@@ -78,6 +86,7 @@ func (t *Arith) Panic(*fastjsonrpc.Context) { panic("ERROR") }
 func (t *Arith) Error(c *fastjsonrpc.Context) {
 	c.Error = fastjsonrpc.NewError(-32000, "Server error")
 }
+
 ```
 
 ### HTTP Request
@@ -131,5 +140,9 @@ POST http://localhost:8080/rpc
 Content-Type: application/json
 
 {"jsonrpc":"2.0","method":"Arith.Panic","params":{"a":9,"b":9},"id":9}
+
+
+### mem
+GET http://localhost:8080/mem
 
 ```

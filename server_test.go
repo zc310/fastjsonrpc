@@ -14,16 +14,16 @@ func TestError(t *testing.T) {
 	t.Parallel()
 
 	s := new(ServerMap)
-	s.RegisterHandler("error1", func(c *Context) {
+	s.RegisterHandler("error1", func(c *RequestCtx) {
 		c.Error = NewError(-32000, "Server error")
 	})
-	s.RegisterHandler("error2", func(c *Context) {
+	s.RegisterHandler("error2", func(c *RequestCtx) {
 		c.Error = []byte(`{"code":-32000,"message":"Server error"}`)
 	})
-	s.RegisterHandler("error3", func(c *Context) {
+	s.RegisterHandler("error3", func(c *RequestCtx) {
 		c.Error = errors.New("server error")
 	})
-	s.RegisterHandler("error4", func(c *Context) {
+	s.RegisterHandler("error4", func(c *RequestCtx) {
 		o := c.Arena.NewObject()
 		o.Set("code", c.Arena.NewNumberInt(-32000))
 		o.Set("message", c.Arena.NewString("server error"))
@@ -68,7 +68,7 @@ func TestError(t *testing.T) {
 }
 func TestBatch(t *testing.T) {
 	s := new(ServerMap)
-	s.RegisterHandler("sum", func(c *Context) {
+	s.RegisterHandler("sum", func(c *RequestCtx) {
 		c.Result = c.Params.GetInt("a") + c.Params.GetInt("b")
 	})
 
@@ -103,7 +103,7 @@ func TestSpec(t *testing.T) {
 	t.Parallel()
 
 	s := new(ServerMap)
-	s.RegisterHandler("subtract", func(c *Context) {
+	s.RegisterHandler("subtract", func(c *RequestCtx) {
 		switch c.Params.Type() {
 		case fastjson.TypeArray:
 			c.Result = c.Params.GetInt("0") - c.Params.GetInt("1")
@@ -111,16 +111,16 @@ func TestSpec(t *testing.T) {
 			c.Result = c.Params.GetInt("minuend") - c.Params.GetInt("subtrahend")
 		}
 	})
-	s.RegisterHandler("sum", func(c *Context) {
+	s.RegisterHandler("sum", func(c *RequestCtx) {
 		var result int
 		for _, param := range c.Params.GetArray() {
 			result += param.GetInt()
 		}
 		c.Result = result
 	})
-	s.RegisterHandler("get_data", func(c *Context) { c.Result = []any{"hello", 5} })
-	s.RegisterHandler("notify_hello", func(c *Context) {})
-	s.RegisterHandler("notify_sum", func(c *Context) {})
+	s.RegisterHandler("get_data", func(c *RequestCtx) { c.Result = []any{"hello", 5} })
+	s.RegisterHandler("notify_hello", func(c *RequestCtx) {})
+	s.RegisterHandler("notify_sum", func(c *RequestCtx) {})
 
 	f := func(request, response string) {
 		ctx := new(fasthttp.RequestCtx)

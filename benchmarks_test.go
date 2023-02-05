@@ -10,7 +10,7 @@ func BenchmarkEchoHandler(b *testing.B) {
 	b.ReportAllocs()
 
 	s := new(ServerMap)
-	s.RegisterHandler("echo", func(c *Context) { c.Result = c.Params })
+	s.RegisterHandler("echo", func(c *RequestCtx) { c.Result = c.Params })
 
 	ctx := new(fasthttp.RequestCtx)
 	ctx.Request.Header.SetMethod(fasthttp.MethodPost)
@@ -26,7 +26,7 @@ func BenchmarkSumHandler(b *testing.B) {
 	b.ReportAllocs()
 
 	s := new(ServerMap)
-	s.RegisterHandler("sum", func(c *Context) {
+	s.RegisterHandler("sum", func(c *RequestCtx) {
 		c.Result = c.Params.GetInt("a") + c.Params.GetInt("b")
 	})
 
@@ -45,7 +45,7 @@ func BenchmarkErrorHandler(b *testing.B) {
 	b.ReportAllocs()
 
 	s := new(ServerMap)
-	s.RegisterHandler("error", func(c *Context) {
+	s.RegisterHandler("error", func(c *RequestCtx) {
 		c.Error = NewError(-32000, "Server error")
 	})
 
@@ -64,7 +64,7 @@ func BenchmarkBatchSumHandler(b *testing.B) {
 	b.ReportAllocs()
 
 	s := new(ServerMap)
-	s.RegisterHandler("sum", func(c *Context) {
+	s.RegisterHandler("sum", func(c *RequestCtx) {
 		c.Result = c.Params.GetInt("a") + c.Params.GetInt("b")
 	})
 
@@ -93,7 +93,7 @@ func BenchmarkParamsUnmarshalHandler(b *testing.B) {
 	b.ReportAllocs()
 
 	s := new(ServerMap)
-	s.RegisterHandler("sum", func(c *Context) {
+	s.RegisterHandler("sum", func(c *RequestCtx) {
 		var a Args
 		if c.Error = c.ParamsUnmarshal(&a); c.Error == nil {
 			c.Result = a.A + a.B

@@ -21,7 +21,7 @@ func (p *ServerMap) Handler(ctx *fasthttp.RequestCtx) {
 	_, _ = c.w.WriteTo(ctx)
 	putContext(c)
 }
-func (p *ServerMap) call(ctx *fasthttp.RequestCtx, c *Context) {
+func (p *ServerMap) call(ctx *fasthttp.RequestCtx, c *RequestCtx) {
 	var err error
 	if c.request, err = c.pr.ParseBytes(ctx.PostBody()); err != nil {
 		_, _ = c.w.Write(errParse)
@@ -64,7 +64,7 @@ func (p *ServerMap) call(ctx *fasthttp.RequestCtx, c *Context) {
 		c.writeError(c.w)
 	}
 }
-func (p *ServerMap) batch(a []*fastjson.Value, ctx *Context) {
+func (p *ServerMap) batch(a []*fastjson.Value, ctx *RequestCtx) {
 	bf := getBatchBuffer(len(a))
 
 	for i, sc := range a {

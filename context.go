@@ -11,8 +11,8 @@ import (
 
 //go:generate qtc -dir=.
 
-type Handler func(ctx *Context)
-type Context struct {
+type Handler func(ctx *RequestCtx)
+type RequestCtx struct {
 	request *fastjson.Value
 	id      []byte
 	pr      *fastjson.Parser
@@ -28,14 +28,14 @@ type Context struct {
 	Result any
 }
 
-func (p *Context) ParamsUnmarshal(v any) error {
+func (p *RequestCtx) ParamsUnmarshal(v any) error {
 	b := bytebufferpool.Get()
 	defer bytebufferpool.Put(b)
 
 	b.B = p.Params.MarshalTo(b.B)
 	return json.Unmarshal(b.B, v)
 }
-func (p *Context) setRequest(a *fastjson.Value) {
+func (p *RequestCtx) setRequest(a *fastjson.Value) {
 	p.Method = a.GetStringBytes("method")
 
 	p.request = a
@@ -46,7 +46,7 @@ func (p *Context) setRequest(a *fastjson.Value) {
 	}
 }
 
-func (p *Context) writeResult(w io.Writer) {
+func (p *RequestCtx) writeResult(w io.Writer) {
 	if len(p.id) == 0 {
 		return
 	}
@@ -64,7 +64,7 @@ func (p *Context) writeResult(w io.Writer) {
 		bytebufferpool.Put(b)
 	}
 }
-func (p *Context) writeError(w io.Writer) {
+func (p *RequestCtx) writeError(w io.Writer) {
 	if len(p.id) == 0 {
 		return
 	}
@@ -110,17 +110,17 @@ var (
 	_poolBuffer sync.Pool
 )
 
-func getContext() *Context {
+func getContext() *RequestCtx {
 	v := _pool.Get()
 	if v == nil {
-		return &Context{Arena: new(fastjson.Arena), pr: new(fastjson.Parser), w: bytebufferpool.Get()}
+		return &RequestCtx{Arena: new(fastjson.Arena), pr: new(fastjson.Parser), w: bytebufferpool.Get()}
 	}
-	t := v.(*Context)
+	t := v.(*RequestCtx)
 	t.w = bytebufferpool.Get()
 	return t
 }
 
-func putContext(p *Context) {
+func putContext(p *RequestCtx) {
 	p.Arena.Reset()
 	bytebufferpool.Put(p.w)
 	p.w = nil
@@ -135,7 +135,7 @@ func putContext(p *Context) {
 type batchBuffer struct {
 	wg sync.WaitGroup
 	B  []*bytebufferpool.ByteBuffer
-	Ct []*Context
+	Ct []*RequestCtx
 	w  *bytebufferpool.ByteBuffer
 }
 
@@ -143,7 +143,7 @@ func getBatchBuffer(n int) *batchBuffer {
 	var p *batchBuffer
 	v := _poolBuffer.Get()
 	if v == nil {
-		p = &batchBuffer{B: make([]*bytebufferpool.ByteBuffer, 0, 32), Ct: make([]*Context, 0, 32)}
+		p = &batchBuffer{B: make([]*bytebufferpool.ByteBuffer, 0, 32), Ct: make([]*RequestCtx, 0, 32)}
 	} else {
 		p = v.(*batchBuffer)
 	}

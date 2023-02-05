@@ -8,7 +8,7 @@ import (
 	"sync"
 )
 
-var typeOfContext = reflect.TypeOf(&Context{})
+var typeOfContext = reflect.TypeOf(&RequestCtx{})
 
 type service struct {
 	name   string             // name of service
@@ -98,7 +98,7 @@ func suitableMethods(s *service) map[string]Handler {
 			continue
 		}
 
-		methods[method.Name] = func(c *Context) { method.Func.Call([]reflect.Value{s.rcvr, reflect.ValueOf(c)}) }
+		methods[method.Name] = func(c *RequestCtx) { method.Func.Call([]reflect.Value{s.rcvr, reflect.ValueOf(c)}) }
 	}
 	return methods
 }

@@ -47,18 +47,18 @@ func main() {
 
 	var tt Arith
 	_ = ss.Register(&tt)
-	ss.RegisterHandler("echo", func(c *fastjsonrpc.Context) {
+	ss.RegisterHandler("echo", func(c *fastjsonrpc.RequestCtx) {
 		c.Result = c.Params
 	})
-	ss.RegisterHandler("sum", func(c *fastjsonrpc.Context) {
+	ss.RegisterHandler("sum", func(c *fastjsonrpc.RequestCtx) {
 		c.Result = c.Params.GetInt("a") + c.Params.GetInt("b")
 	})
-	ss.RegisterHandler("error", func(c *fastjsonrpc.Context) {
+	ss.RegisterHandler("error", func(c *fastjsonrpc.RequestCtx) {
 		c.Error = nil
 	})
 	r.POST("/rpc", fasthttp.CompressHandler(ss.Handler))
 
-	r.GET("/mem", fastjsonrpc.Get(func(ctx *fastjsonrpc.Context) {
+	r.GET("/mem", fastjsonrpc.Get(func(ctx *fastjsonrpc.RequestCtx) {
 		var ms runtime.MemStats
 		runtime.ReadMemStats(&ms)
 		ctx.Result = ms
@@ -73,26 +73,26 @@ type Args struct {
 	B int `json:"b,omitempty"`
 }
 
-func (t *Arith) Add(c *fastjsonrpc.Context) {
+func (t *Arith) Add(c *fastjsonrpc.RequestCtx) {
 	var a Args
 	if c.Error = c.ParamsUnmarshal(&a); c.Error == nil {
 		c.Result = a.A + a.B
 	}
 }
 
-func (t *Arith) Mul(c *fastjsonrpc.Context) {
+func (t *Arith) Mul(c *fastjsonrpc.RequestCtx) {
 	c.Result = c.Arena.NewNumberInt(c.Params.GetInt("a") * c.Params.GetInt("b"))
 }
 
-func (t *Arith) Div(c *fastjsonrpc.Context) {
+func (t *Arith) Div(c *fastjsonrpc.RequestCtx) {
 	if c.Params.GetInt("b") == 0 {
 		c.Error = errors.New("divide by zero")
 		return
 	}
 	c.Result = c.Arena.NewNumberInt(c.Params.GetInt("a") / c.Params.GetInt("b"))
 }
-func (t *Arith) Panic(*fastjsonrpc.Context) { panic("ERROR") }
-func (t *Arith) Error(c *fastjsonrpc.Context) {
+func (t *Arith) Panic(*fastjsonrpc.RequestCtx) { panic("ERROR") }
+func (t *Arith) Error(c *fastjsonrpc.RequestCtx) {
 	c.Error = fastjsonrpc.NewError(-32000, "Server error")
 }
 ```

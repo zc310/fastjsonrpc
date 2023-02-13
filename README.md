@@ -11,11 +11,13 @@ goos: linux
 goarch: amd64
 pkg: github.com/zc310/fastjsonrpc
 cpu: Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz
-BenchmarkEchoHandler     	21035839	       570.4 ns/op	       0 B/op	       0 allocs/op
-BenchmarkSumHandler      	16349688	       724.4 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBatchSumHandler 	 5367964	      2219 ns/op	     712 B/op	      11 allocs/op
+BenchmarkEchoHandler            	21422912	       555.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSumHandler             	16634361	       718.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkErrorHandler           	15317910	       744.7 ns/op	      48 B/op	       1 allocs/op
+BenchmarkBatchSumHandler        	 5419057	      2213 ns/op	     712 B/op	      11 allocs/op
+BenchmarkParamsUnmarshalHandler 	12894405	       923.6 ns/op	      32 B/op	       2 allocs/op
 PASS
-ok  	github.com/zc310/fastjsonrpc	39.345s
+ok  	github.com/zc310/fastjsonrpc	64.434s
 ```
 
 ## Install

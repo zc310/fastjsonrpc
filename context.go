@@ -59,8 +59,11 @@ func (p *RequestCtx) writeResult(w io.Writer) {
 		writenewResult(w, p.id, v)
 	default:
 		b := bytebufferpool.Get()
-		_ = json.NewEncoder(b).Encode(p.Result)
-		writenewResult(w, p.id, b.B)
+		if p.Error = json.NewEncoder(b).Encode(p.Result); p.Error != nil {
+			p.writeError(w)
+		} else {
+			writenewResult(w, p.id, b.B)
+		}
 		bytebufferpool.Put(b)
 	}
 }
@@ -83,8 +86,11 @@ func (p *RequestCtx) writeError(w io.Writer) {
 				writenewError(w, p.id, err.Code, err.Message, v)
 			default:
 				b := bytebufferpool.Get()
-				_ = json.NewEncoder(b).Encode(err.Data)
-				writenewError(w, p.id, err.Code, err.Message, b.B)
+				if p.Error = json.NewEncoder(b).Encode(err.Data); p.Error != nil {
+					p.writeError(w)
+				} else {
+					writenewError(w, p.id, err.Code, err.Message, b.B)
+				}
 				bytebufferpool.Put(b)
 			}
 		}

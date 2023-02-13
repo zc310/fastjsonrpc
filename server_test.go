@@ -7,6 +7,7 @@ import (
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fastjson"
 	. "github.com/zc310/fastjsonrpc"
+	"math"
 	"testing"
 )
 
@@ -29,6 +30,8 @@ func TestError(t *testing.T) {
 		o.Set("message", c.Arena.NewString("server error"))
 		c.Error = o
 	})
+	s.RegisterHandler("error5", func(c *RequestCtx) { c.Result = math.NaN() })
+	s.RegisterHandler("error6", func(c *RequestCtx) { c.Error = &Error{Data: math.NaN()} })
 	f := func(request, response string) {
 		ctx := new(fasthttp.RequestCtx)
 		ctx.Request.Header.SetMethod(fasthttp.MethodPost)
@@ -63,6 +66,18 @@ func TestError(t *testing.T) {
 		f(
 			`{"jsonrpc": "2.0", "method": "error4", "params": {}, "id": 4}`,
 			`{"jsonrpc":"2.0","error":{"code":-32000,"message":"server error"},"id":4}`,
+		)
+	})
+	t.Run("rpc error5", func(t *testing.T) {
+		f(
+			`{"jsonrpc": "2.0", "method": "error5", "params": {}, "id": 5}`,
+			`{"jsonrpc":"2.0","error":{"code":-32000,"message":"json: unsupported value: NaN"},"id":5}`,
+		)
+	})
+	t.Run("rpc error6", func(t *testing.T) {
+		f(
+			`{"jsonrpc": "2.0", "method": "error6", "params": {}, "id": 6}`,
+			`{"jsonrpc":"2.0","error":{"code":-32000,"message":"json: unsupported value: NaN"},"id":6}`,
 		)
 	})
 }

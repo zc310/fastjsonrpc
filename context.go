@@ -29,6 +29,10 @@ type RequestCtx struct {
 }
 
 func (p *RequestCtx) ParamsUnmarshal(v any) error {
+	if p.Params == nil {
+		return json.Unmarshal(p.Ctx.PostBody(), v)
+	}
+
 	b := bytebufferpool.Get()
 	defer bytebufferpool.Put(b)
 

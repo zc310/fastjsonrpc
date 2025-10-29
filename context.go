@@ -1,12 +1,13 @@
 package fastjsonrpc
 
 import (
+	"io"
+	"sync"
+
 	"github.com/goccy/go-json"
 	"github.com/valyala/bytebufferpool"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fastjson"
-	"io"
-	"sync"
 )
 
 //go:generate qtc -dir=.

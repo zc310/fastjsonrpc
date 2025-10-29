@@ -2,6 +2,7 @@ package fastjsonrpc
 
 import (
 	"fmt"
+
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fastjson"
 )

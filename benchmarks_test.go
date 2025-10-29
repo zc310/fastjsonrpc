@@ -1,9 +1,10 @@
 package fastjsonrpc_test
 
 import (
+	"testing"
+
 	"github.com/valyala/fasthttp"
 	. "github.com/zc310/fastjsonrpc"
-	"testing"
 )
 
 func BenchmarkEchoHandler(b *testing.B) {

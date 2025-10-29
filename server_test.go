@@ -2,13 +2,14 @@ package fastjsonrpc_test
 
 import (
 	"errors"
+	"math"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/tidwall/pretty"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fastjson"
 	. "github.com/zc310/fastjsonrpc"
-	"math"
-	"testing"
 )
 
 func TestError(t *testing.T) {

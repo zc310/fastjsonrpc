@@ -8,7 +8,7 @@ require (
 	github.com/tidwall/pretty v1.2.1
 	github.com/valyala/bytebufferpool v1.0.0
 	github.com/valyala/fasthttp v1.68.0
-	github.com/valyala/fastjson v1.6.4
+	github.com/valyala/fastjson v1.6.7
 	github.com/valyala/quicktemplate v1.8.0
 )
 

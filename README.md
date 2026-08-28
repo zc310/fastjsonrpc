@@ -33,10 +33,16 @@ package main
 
 import (
 	"errors"
-	"github.com/fasthttp/router"
-	"github.com/valyala/fasthttp"
-	"github.com/zc310/fastjsonrpc"
+	"log"
+	"log/slog"
 	"runtime"
+
+	"github.com/fasthttp/router"
+	"github.com/fasthttp/websocket"
+	"github.com/valyala/fasthttp"
+	"github.com/valyala/fastjson"
+	"github.com/zc310/fastjsonrpc"
+	"github.com/zc310/fastjsonrpc/ws"
 )
 
 func main() {
@@ -65,6 +71,15 @@ func main() {
 		runtime.ReadMemStats(&ms)
 		ctx.Result = ms
 	}))
+
+	rpc := ws.NewJSONRPC2()
+	r.ANY("/ws", WebSocketHandler(rpc))
+
+	rpc.RegisterMethodFunc("mem", func(params *fastjson.Value) (any, error) {
+		var ms runtime.MemStats
+		runtime.ReadMemStats(&ms)
+		return ms, nil
+	})
 
 	_ = fasthttp.ListenAndServe(":8080", r.Handler)
 }
@@ -97,6 +112,24 @@ func (t *Arith) Panic(*fastjsonrpc.RequestCtx) { panic("ERROR") }
 func (t *Arith) Error(c *fastjsonrpc.RequestCtx) {
 	c.Error = fastjsonrpc.NewError(-32000, "Server error")
 }
+
+func WebSocketHandler(rpc *ws.JSONRPC2) fasthttp.RequestHandler {
+	rpc.RegisterTestService()
+
+	methods := rpc.GetRegisteredMethods()
+	slog.Info("Registered test methods:")
+	for _, method := range methods {
+		log.Printf("  - %s", method)
+	}
+	var upgrader = websocket.FastHTTPUpgrader{
+		CheckOrigin: func(ctx *fasthttp.RequestCtx) bool {
+			return true
+		},
+	}
+
+	return ws.Handler(rpc, &upgrader)
+}
+
 ```
 
 ### HTTP Request
@@ -155,4 +188,38 @@ Content-Type: application/json
 ### mem
 GET http://localhost:8080/mem
 
+```
+
+### WebSocket Request
+
+```js
+<script>
+  const ws = new WebSocket('ws://127.0.0.1:8080/ws');
+
+  ws.onopen = () => {
+    console.log('WebSocket 连接成功');
+
+    const message = {
+      jsonrpc: "2.0",
+      method: "echo",
+      params: { a: 9, b: 9 },
+      id: 9
+    };
+
+    ws.send(JSON.stringify(message));
+    console.log('已发送消息:', message);
+  };
+
+  ws.onmessage = (event) => {
+    console.log('收到消息:', event.data);
+  };
+
+  ws.onerror = (error) => {
+    console.error('WebSocket 错误:', error);
+  };
+
+  ws.onclose = () => {
+    console.log('WebSocket 连接关闭');
+  };
+</script>
 ```
